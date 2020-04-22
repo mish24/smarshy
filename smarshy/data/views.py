@@ -4,33 +4,41 @@ from django.http import HttpResponse
 from .models import YoutubeData
 import json
 import requests
+import dateutil.parser
 
 # Create your views here.
 def index(request):
 
     data = fetchVideos()
 
-    # data = YoutubeMetadata.objects.all()
     response = []
     
     for i in data['items']:
         entry = {}
-        # entry['title'] = i.title
-        entry['title'] = i['snippet']['title']
-        entry['description'] = i['snippet']['description']
-        entry['publishedTimestamp'] = i['snippet']['publishedAt']
-        entry['thumbnailUrl'] = i['snippet']['thumbnails']['default']['url']
+        # entry['avds'] = str(i.publishTimestamp)
+        entry['video_title'] = i['snippet']['title']
+        entry['desc'] = i['snippet']['description']
+        entry['timestamp'] = str(i['snippet']['publishedAt'])
+        entry['pic_url'] = i['snippet']['thumbnails']['default']['url']
         response.append(entry)
+
+        dbRow = YoutubeData()
+        dbRow.video_title = entry['video_title']
+        dbRow.desc = entry['desc']
+        dbRow.timestamp = str(dateutil.parser.parse(entry['timestamp']))
+        dbRow.pic_url = entry['pic_url']
+        dbRow.save()
     
-    res = json.dumps(response)
+    res = json.dumps(response, indent=4, sort_keys=True)
     return HttpResponse(res)
 
 def fetchVideos():
     queryArguments = {
     'order':'date',
     'part':'snippet',
-    'publishedAfter':'2020-04-04T15:51:12.000Z',
-    'q':'mkbhd',
+    'maxResults': 5,
+    'publishedAfter':'2000-04-04T15:51:12.000Z',
+    'q':'coronavirus',
     'type':'video',
     'key':'AIzaSyDpzfHFfUJ8yzhzK93jwol8mp3kpKKEEMU'
     }
